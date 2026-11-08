@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Wiser Way: the road</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#9FD8F0}
+canvas{display:block;width:100%;height:100%}
+</style>
+</head>
+<body>
+<canvas aria-hidden="true"></canvas>
+<script>
+// The app's own map runtime, hosted here instead of in the app's WebView.
+// It reports to "ReactNativeWebView"; on the web that channel is the parent page.
+// The world can start before the page listens, so "ready" and "firstFrame" are kept and
+// repeated when the page says hello.
+const seen = {};
+const post = message => parent.postMessage({ awwWorld: message }, location.origin);
+window.ReactNativeWebView = { postMessage: data => { const m = JSON.parse(data); if (m.type === 'ready' || m.type === 'firstFrame') seen[m.type] = m; post(m); } };
+addEventListener('message', event => {
+  if (event.origin !== location.origin || !event.data) return;
+  if (event.data.awwHello) ['ready', 'firstFrame'].forEach(type => seen[type] && post(seen[type]));
+  else if (event.data.awwCommand && window.mapBridge) window.mapBridge(event.data.awwCommand);
+});
+</script>
+<script src="world.js"></script>
+<script>mountMap({ focusSession: 0, paused: false });</script>
+</body>
+</html>
