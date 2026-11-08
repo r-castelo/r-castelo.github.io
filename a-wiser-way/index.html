@@ -18,60 +18,42 @@
 <link rel="stylesheet" href="landing.css">
 </head>
 <body>
+<header class="hero" id="top">
 <div class="world" id="world" aria-hidden="true">
   <iframe id="world-frame" title="The road, in 3D" src="world.html" tabindex="-1"></iframe>
   <div class="world-fallback"></div>
   <div class="world-veil"></div>
 </div>
-
-<header class="hero" id="top">
   <div class="hero-text">
     <h1>A Wiser Way</h1>
     <p class="tagline">One road. 100 sessions.<br>Philosophy you can use.</p>
   </div>
   <div class="hero-foot">
+    <p class="tour" id="tour" aria-live="off"></p>
     <p class="hero-lede">Short guided audio sessions on how to live, from Socrates in the marketplace of Athens to the Zen gardens of Kyoto.</p>
     <div class="hero-actions">
       <span class="store-pill">Coming soon to Google Play</span>
-      <a class="text-link" href="#road">Walk the road <span class="arrow" aria-hidden="true">↓</span></a>
+      <a class="text-link" href="#how">How it works <span class="arrow" aria-hidden="true">↓</span></a>
     </div>
   </div>
 </header>
 
 <main>
-  <section class="road" id="road" aria-label="The ten chapters">
-    <div class="road-intro panel">
-      <p class="eyebrow">The road</p>
-      <h2>Ten chapters. One stop a day.</h2>
-      <p>You walk it in order, each session building on the last. Every stop is one thinker and one big idea, told plainly, with a small practice to take into your week.</p>
-    </div>
-    <div id="chapters"></div>
-  </section>
-
-  <section class="explore" id="explore" aria-label="Explore the map">
-    <div class="panel explore-panel">
-      <p class="eyebrow">Your turn</p>
-      <h2>A hundred stops, all on one map.</h2>
-      <p>Drag along the road and tap any stop to see where it leads.</p>
-      <button class="button" id="explore-open" type="button">Explore the road</button>
-    </div>
-  </section>
-
   <div class="paper">
-    <section class="how" aria-labelledby="how-title">
+    <section class="how" id="how" aria-labelledby="how-title">
       <p class="eyebrow">Every session</p>
       <h2 id="how-title">Three parts, about ten minutes</h2>
       <div class="steps">
         <figure class="step">
-          <div class="phone"><img src="img/player.webp" width="540" height="897" loading="lazy" alt="The player for session 1, Why philosophy is a way of life, with story, idea and reflection parts."></div>
+          <div class="phone"><img src="img/player.webp" width="540" height="1137" loading="lazy" alt="The player for session 1, Why philosophy is a way of life, with story, idea and reflection parts."></div>
           <figcaption><span class="num">1</span><strong>A story</strong>A real scene from a real life: Socrates refusing to stop asking questions, Zeno after his shipwreck, Zhuangzi's useless tree.</figcaption>
         </figure>
         <figure class="step">
-          <div class="phone"><img src="img/card.webp" width="540" height="897" loading="lazy" alt="The session card for The dichotomy of control, with a quote from Epictetus."></div>
+          <div class="phone"><img src="img/card.webp" width="540" height="1137" loading="lazy" alt="The session card for The dichotomy of control, with a quote from Epictetus."></div>
           <figcaption><span class="num">2</span><strong>The idea</strong>One surprising insight, in plain words, with the picture the thinker used to explain it.</figcaption>
         </figure>
         <figure class="step">
-          <div class="phone"><img src="img/reflect.webp" width="540" height="897" loading="lazy" alt="A practice that sorts a worry into what is up to me and what is not."></div>
+          <div class="phone"><img src="img/reflect.webp" width="540" height="1137" loading="lazy" alt="A practice that sorts a worry into what is up to me and what is not."></div>
           <figcaption><span class="num">3</span><strong>A practice</strong>A small exercise that grows out of the idea, and a few lines in your journal.</figcaption>
         </figure>
       </div>
@@ -90,7 +72,7 @@
         <h2 id="journal-title">Your own words, kept on your phone</h2>
         <p>In session 10 you write your first definition of a good life. At the summit, you come back to it and see what changed. Everything you write stays on your device.</p>
       </div>
-      <div class="phone small"><img src="img/journal.webp" width="540" height="897" loading="lazy" alt="A saved journal entry: one person's first definition of a good life."></div>
+      <div class="phone small"><img src="img/journal.webp" width="540" height="1137" loading="lazy" alt="A saved journal entry: one person's first definition of a good life."></div>
     </section>
 
     <section class="promise" aria-labelledby="promise-title">
@@ -116,12 +98,6 @@
     </footer>
   </div>
 </main>
-
-<div class="explore-ui" id="explore-ui" hidden>
-  <button class="button close" id="explore-close" type="button">Back to the page</button>
-  <p class="explore-hint" id="explore-hint">Drag the road. Tap a stop.</p>
-  <div class="stop-card" id="stop-card" hidden aria-live="polite"></div>
-</div>
 
 <script src="landing.js" defer></script>
 </body>
