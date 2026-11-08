@@ -1,90 +1,94 @@
-// The hero plays the app's own 3D road (world.html) as a short tour: the traveller
-// walks from the city gate through each chapter to the summit, then starts again.
+// The existing introduction is shared by both listening buttons. Audio is fetched
+// only after the visitor asks to listen; native controls provide seeking/volume.
 (() => {
-  const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+  const audio = document.getElementById('intro-audio');
+  const buttons = [...document.querySelectorAll('.intro-play')];
+  const controls = document.querySelector('.audio-controls');
+  const status = document.querySelector('.audio-status');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const fmt = seconds => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+  const updateAudio = () => {
+    const playing = !audio.paused && !audio.ended;
+    buttons.forEach(button => {
+      button.setAttribute('aria-pressed', String(playing));
+      button.querySelector('.intro-icon').textContent = playing ? 'Ⅱ' : '▶';
+      button.querySelector('.intro-label').textContent = playing ? 'Pause the introduction' : audio.ended ? 'Listen again' : audio.currentTime > 0 ? 'Resume the introduction' : 'Listen to the introduction';
+      button.querySelector('.intro-time').textContent = audio.currentTime > 0 && Number.isFinite(audio.duration) ? `${fmt(audio.currentTime)} / ${fmt(audio.duration)}` : '3 min';
+    });
+  };
+  buttons.forEach(button => button.addEventListener('click', async () => {
+    controls.hidden = false;
+    status.textContent = '';
+    if (!document.querySelector('.hero').contains(button)) {
+      document.getElementById('listen').scrollIntoView({ behavior: reduced.matches ? 'instant' : 'smooth', block: 'center' });
+      buttons[0].focus({ preventScroll: true });
+    }
+    if (!audio.paused) { audio.pause(); return; }
+    try { await audio.play(); }
+    catch { status.textContent = 'The introduction could not play. Try again, or use the direct audio link below.'; updateAudio(); }
+  }));
+  ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata'].forEach(event => audio.addEventListener(event, updateAudio));
+  audio.addEventListener('error', () => { status.textContent = 'The introduction could not load. Try again, or use the direct audio link below.'; updateAudio(); });
+
+  // Keep the map in its own visual area. Respect reduced motion, the visitor's
+  // pause control, page visibility, and whether the map is on screen.
   const world = document.getElementById('world');
   const frame = document.getElementById('world-frame');
-  const tour = document.getElementById('tour');
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  let ready = false, chapters = null, timer = null, onArrive = null, visible = true;
-
+  const motion = document.querySelector('.motion-toggle');
+  let ready = false, visible = true, userPaused = false, timer = null, onArrive = null;
   const send = command => { if (ready) frame.contentWindow.postMessage({ awwCommand: command }, location.origin); };
-  const states = current => Array.from({ length: 100 }, (_, i) => i + 1 < current ? 'done' : i + 1 === current ? 'current' : 'ahead');
   const later = (ms, fn) => { clearTimeout(timer); timer = setTimeout(fn, ms); };
-
-  // Without WebGL, or if the world never answers, a still of the map stands in.
-  const fail = () => world.classList.add('failed');
-  const giveUp = setTimeout(() => { if (!world.classList.contains('live')) fail(); }, 12000);
-  addEventListener('message', event => {
-    if (event.origin !== location.origin || !event.data || !event.data.awwWorld) return;
-    const m = event.data.awwWorld;
-    if (m.type === 'ready' && !ready) {
-      ready = true;
-      send({ type: 'reducedMotion', reducedMotion: reduced.matches });
-      start(true);
-    } else if (m.type === 'firstFrame') { clearTimeout(giveUp); world.classList.add('live'); }
-    else if (m.type === 'error') { clearTimeout(giveUp); fail(); }
-    else if (m.type === 'arrive' && onArrive) { const f = onArrive; onArrive = null; f(); }
-    else if (m.type === 'focus') follow(m.focusSession);
-  });
-  const hello = () => frame.contentWindow && frame.contentWindow.postMessage({ awwHello: true }, location.origin);
-  hello(); frame.addEventListener('load', hello);
-  reduced.addEventListener('change', () => send({ type: 'reducedMotion', reducedMotion: reduced.matches }));
-  fetch('data.json').then(r => r.json()).then(d => { chapters = d.chapters; }).catch(() => {});
-
-  // The tour: a moment at the gate, then one unbroken walk to the summit. The caption and
-  // the stones behind him follow the camera, which follows him.
-  let shown = null;
-  // No welcome pose: it frames the traveller at another zoom, and leaving it jumps the
-  // camera. The map opens at its normal view and he simply sets off; between loops the
-  // world fades out, returns to the gate unseen, and fades back in.
-  function reset() { send({ type: 'markers', states: states(0) }); send({ type: 'traveller', session: 0 }); send({ type: 'focus', focusSession: 0 }); }
+  const states = current => Array.from({ length: 100 }, (_, i) => i + 1 < current ? 'done' : i + 1 === current ? 'current' : 'ahead');
+  const reset = () => { send({ type: 'markers', states: states(0) }); send({ type: 'traveller', session: 0 }); send({ type: 'focus', focusSession: 0 }); };
+  const paused = () => reduced.matches || userPaused || !visible || document.hidden;
+  const updateMotion = () => {
+    const stopped = reduced.matches || userPaused;
+    motion.textContent = stopped ? 'Play animation' : 'Pause animation';
+    motion.setAttribute('aria-pressed', String(stopped));
+    motion.disabled = reduced.matches;
+    if (reduced.matches) motion.textContent = 'Still view';
+    send({ type: 'pause', paused: paused() });
+  };
   function walk() {
-    onArrive = () => { send({ type: 'celebrate' }); later(5000, () => start(false)); };
+    if (paused()) return later(1000, walk);
+    onArrive = () => { if (!paused()) send({ type: 'celebrate' }); later(5000, () => start(false)); };
     send({ type: 'walkTo', session: 100 });
-    later(240000, () => start(false)); // never stall if an arrival is missed
+    later(240000, () => start(false));
   }
   function start(first) {
-    shown = null; caption(null); onArrive = null;
-    if (first) { reset(); return later(2200, walk); }
+    onArrive = null;
+    if (reduced.matches) { reset(); updateMotion(); return; }
+    if (paused()) return later(1000, () => start(first));
+    if (first) { reset(); updateMotion(); return later(2200, walk); }
     world.classList.add('resetting');
     later(900, () => { reset(); later(2400, () => { world.classList.remove('resetting'); later(1400, walk); }); });
   }
-  function follow(session) {
-    if (!onArrive || session < 1) return;
-    const chapter = Math.min(9, Math.floor((session - 1) / 10));
-    if (chapter === shown) return;
-    shown = chapter; caption(chapter);
-    send({ type: 'markers', states: states(chapter * 10 + 1) });
-  }
-  function caption(i) {
-    if (i === null || !chapters) { tour.classList.remove('on'); return; }
-    const c = chapters[i];
-    tour.classList.remove('on');
-    setTimeout(() => {
-      tour.innerHTML = `<span class="numeral" style="background:${c.accent}">${ROMAN[i]}</span><span><strong>${c.name}</strong><em>${c.guides}</em></span>`;
-      tour.classList.add('on');
-    }, 250);
-  }
-
-  // The intro narration from the app, loaded only when asked for.
-  const play = document.getElementById('intro-play');
-  const clock = document.getElementById('intro-time');
-  let intro = null;
-  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
-  play.addEventListener('click', () => {
-    if (!intro) {
-      intro = new Audio('audio/intro.mp3');
-      intro.addEventListener('timeupdate', () => { clock.textContent = `${fmt(intro.currentTime)} / ${fmt(intro.duration || 187)}`; });
-      intro.addEventListener('ended', () => { play.setAttribute('aria-pressed', 'false'); play.querySelector('.intro-label').textContent = 'Play again'; });
+  const fail = () => { world.classList.add('failed'); motion.hidden = true; clearTimeout(timer); };
+  const giveUp = setTimeout(() => { if (!world.classList.contains('live')) fail(); }, 12000);
+  addEventListener('message', event => {
+    if (event.origin !== location.origin || event.source !== frame.contentWindow || !event.data?.awwWorld) return;
+    const message = event.data.awwWorld;
+    if (message.type === 'ready' && !ready) {
+      ready = true; send({ type: 'reducedMotion', reducedMotion: reduced.matches }); start(true); updateMotion();
+    } else if (message.type === 'firstFrame') {
+      clearTimeout(giveUp); world.classList.remove('failed'); world.classList.add('live'); motion.hidden = false;
+    } else if (message.type === 'error') { clearTimeout(giveUp); fail(); }
+    else if (message.type === 'arrive' && onArrive) { const next = onArrive; onArrive = null; next(); }
+    else if (message.type === 'focus' && onArrive && message.focusSession >= 1) {
+      const chapter = Math.min(9, Math.floor((message.focusSession - 1) / 10));
+      send({ type: 'markers', states: states(chapter * 10 + 1) });
     }
-    if (intro.paused) { intro.play(); play.setAttribute('aria-pressed', 'true'); play.querySelector('.intro-label').textContent = 'Pause the intro'; }
-    else { intro.pause(); play.setAttribute('aria-pressed', 'false'); play.querySelector('.intro-label').textContent = 'Resume the intro'; }
   });
-
-  // Only run the world while the hero is on screen.
-  new IntersectionObserver(([entry]) => {
-    if (entry.isIntersecting === visible) return;
-    visible = entry.isIntersecting; send({ type: 'pause', paused: !visible });
-  }).observe(document.querySelector('.hero'));
+  const hello = () => frame.contentWindow?.postMessage({ awwHello: true }, location.origin);
+  hello(); frame.addEventListener('load', hello);
+  motion.addEventListener('click', () => { userPaused = !userPaused; updateMotion(); });
+  reduced.addEventListener('change', () => {
+    clearTimeout(timer); world.classList.remove('resetting');
+    send({ type: 'reducedMotion', reducedMotion: reduced.matches });
+    if (reduced.matches) { onArrive = null; reset(); } else start(true);
+    updateMotion();
+  });
+  document.addEventListener('visibilitychange', updateMotion);
+  new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; updateMotion(); }).observe(document.querySelector('.hero-art'));
+  updateMotion();
 })();
