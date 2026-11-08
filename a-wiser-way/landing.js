@@ -62,8 +62,12 @@
   range.addEventListener('change', () => { seeking = false; });
   ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata'].forEach(event => audio.addEventListener(event, updateAudio));
   audio.addEventListener('error', () => { status.textContent = 'The introduction could not load. Try again, or use the direct audio link at the end of the page.'; updateAudio(); });
-  new IntersectionObserver(([entry]) => { pastHero = !entry.isIntersecting && entry.boundingClientRect.top < 0; updateDock(); }).observe($('#listen'));
-  updateDock();
+  // Measured on scroll: an observer misses a jump past the button when it started below the fold.
+  const listen = $('#listen');
+  let dockFrame = 0;
+  const checkDock = () => { dockFrame = 0; const past = listen.getBoundingClientRect().bottom < 0; if (past !== pastHero) { pastHero = past; updateDock(); } };
+  addEventListener('scroll', () => { if (!dockFrame) dockFrame = requestAnimationFrame(checkDock); }, { passive: true });
+  updateDock(); checkDock();
   // Store buttons are placeholders until the listings exist: give them a real href and drop aria-disabled.
   $$('.store').forEach(link => link.addEventListener('click', event => { if (link.getAttribute('aria-disabled') === 'true') event.preventDefault(); }));
 

@@ -254,12 +254,13 @@ h2 em,h1 em{font-weight:400}
   .page-inner{padding:28px 24px}.page-title{font-size:25px}.page-entry{font-size:20px;line-height:30px;background:repeating-linear-gradient(transparent 0 29px,var(--line) 29px 30px)}
   .hundred{gap:6px}
   .site-footer{gap:18px}.site-footer span{margin-left:0;flex-basis:100%}
-  .dock{left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));gap:8px;padding:6px;transform:translateY(180%);overflow:hidden}.dock.is-on{transform:none}
+  .dock{left:20px;right:20px;bottom:calc(16px + env(safe-area-inset-bottom));gap:8px;padding:6px;transform:translateY(200%);overflow:hidden}  /* clear of rounded screen corners */.dock.is-on{transform:none}
   .dock .mini-text{display:none}.dock-progress{display:block;position:absolute;left:0;right:0;top:0;height:3px}.dock .mini-time{min-width:0;font-size:14px}
   .mini-play{width:42px;height:42px}
-  .stores-dock{margin-left:auto;padding-left:8px;gap:6px}.stores-dock .store{min-height:44px;padding:0 10px 0 8px;gap:7px}.stores-dock .store span{font-size:14px}.stores-dock .store small{font-size:9px}.stores-dock svg{width:17px;height:17px}
+  .stores-dock{margin-left:auto;padding-left:8px;gap:5px}.stores-dock .store{min-height:44px;padding:0 9px 0 7px;gap:6px}.stores-dock .store span{font-size:14px}.stores-dock .store small{font-size:9px}.stores-dock svg{width:17px;height:17px}
   .stores .store{flex:1 1 150px;justify-content:center}.stores-dock .store{flex:0 1 auto}
 }
+@media(max-width:374px){.dock{left:14px;right:14px}.dock .mini-time{display:none}}
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   *,*::before,*::after{animation:none!important;transition:none!important}
