@@ -890,7 +890,7 @@ function animateTraveller(dt, time) {
   const hp0 = pointOnPath(heroS), hp1 = pointOnPath(heroS + (moving ? Math.sign(heroTargetS - heroS) : 1) * 2);
   hero.position.copy(hp0); hero.position.y += 0.08;
   const wantYaw = moving ? Math.atan2(hp1.x - hp0.x, hp1.z - hp0.z) : 0.35;
-  heroYaw += (wantYaw - heroYaw) * Math.min(1, dt * 8);
+  heroYaw += Math.atan2(Math.sin(wantYaw - heroYaw), Math.cos(wantYaw - heroYaw)) * Math.min(1, dt * 8);
   hero.rotation.y = heroYaw;
   const ph = uTime.value * (moving ? 11 : 2.2);
   const swing = moving ? Math.sin(ph) * 0.65 : 0;

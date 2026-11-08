@@ -6,7 +6,7 @@
   const frame = document.getElementById('world-frame');
   const tour = document.getElementById('tour');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  let ready = false, chapters = null, step = -1, timer = null, onArrive = null, visible = true;
+  let ready = false, chapters = null, timer = null, onArrive = null, visible = true;
 
   const send = command => { if (ready) frame.contentWindow.postMessage({ awwCommand: command }, location.origin); };
   const states = current => Array.from({ length: 100 }, (_, i) => i + 1 < current ? 'done' : i + 1 === current ? 'current' : 'ahead');
@@ -25,28 +25,33 @@
     } else if (m.type === 'firstFrame') { clearTimeout(giveUp); world.classList.add('live'); }
     else if (m.type === 'error') { clearTimeout(giveUp); fail(); }
     else if (m.type === 'arrive' && onArrive) { const f = onArrive; onArrive = null; f(); }
+    else if (m.type === 'focus') follow(m.focusSession);
   });
   const hello = () => frame.contentWindow && frame.contentWindow.postMessage({ awwHello: true }, location.origin);
   hello(); frame.addEventListener('load', hello);
   reduced.addEventListener('change', () => send({ type: 'reducedMotion', reducedMotion: reduced.matches }));
   fetch('data.json').then(r => r.json()).then(d => { chapters = d.chapters; }).catch(() => {});
 
-  // The tour: a moment at the gate, then one chapter at a time.
+  // The tour: a moment at the gate, then one unbroken walk to the summit. The caption and
+  // the stones behind him follow the camera, which follows him.
+  let shown = null;
   function start() {
-    step = -1; caption(null);
+    shown = null; caption(null); onArrive = null;
     send({ type: 'markers', states: states(0) });
     send({ type: 'welcome', enabled: true });
-    later(3500, () => { send({ type: 'welcome', enabled: false }); next(); });
+    later(3500, () => {
+      send({ type: 'welcome', enabled: false });
+      onArrive = () => { send({ type: 'celebrate' }); later(5000, start); };
+      send({ type: 'walkTo', session: 100 });
+      later(240000, start); // never stall if an arrival is missed
+    });
   }
-  function next() {
-    step += 1;
-    if (step > 9) { send({ type: 'celebrate' }); return later(4500, start); }
-    const session = step * 10 + 1;
-    send({ type: 'markers', states: states(session) });
-    caption(step);
-    const dwell = () => later(2600, next);
-    if (step === 0 || reduced.matches) { send({ type: 'traveller', session }); send({ type: 'focus', focusSession: session }); later(3200, next); }
-    else { onArrive = dwell; send({ type: 'walkTo', session }); later(20000, () => { onArrive = null; next(); }); }
+  function follow(session) {
+    if (!onArrive || session < 1) return;
+    const chapter = Math.min(9, Math.floor((session - 1) / 10));
+    if (chapter === shown) return;
+    shown = chapter; caption(chapter);
+    send({ type: 'markers', states: states(chapter * 10 + 1) });
   }
   function caption(i) {
     if (i === null || !chapters) { tour.classList.remove('on'); return; }
