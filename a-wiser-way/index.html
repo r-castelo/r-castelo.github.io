@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;0,800;1,400;1,500&family=Alegreya+SC:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="landing.css">
-<link rel="preload" href="world.js" as="script">
+<noscript><style>.world-loader{display:none}</style></noscript>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -28,7 +28,17 @@
   <section class="hero" id="top" aria-labelledby="hero-title">
     <div class="hero-world" id="world" aria-hidden="true">
       <div class="world-fallback"></div>
+      <div class="world-loader"><span class="loader-steps"><i></i><i></i><i></i></span><span class="loader-text">Setting out from the city gate</span></div>
       <iframe id="world-frame" title="The road through A Wiser Way" data-src="world.html" tabindex="-1"></iframe>
+      <script>
+        // Start the world as early as the HTML allows, and only where it can run; otherwise the still image loads instead.
+        (() => {
+          let gl = false;
+          try { const c = document.createElement('canvas'); gl = !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { gl = false; }
+          const frame = document.getElementById('world-frame');
+          if (gl) frame.src = frame.dataset.src; else document.getElementById('world').classList.add('failed');
+        })();
+      </script>
     </div>
     <div class="hero-veil" aria-hidden="true"></div>
     <div class="hero-copy">
@@ -52,7 +62,7 @@
       <span class="plaque-text"><span class="plaque-name">The Agora of Athens</span><span class="plaque-question">How should I live?</span></span>
       <span class="plaque-count"><span id="plaque-session">1</span><small>of 100</small></span>
     </div>
-    <button class="motion-toggle" type="button" aria-pressed="false" aria-label="Pause animation"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14"><path class="i-pause" d="M3 2h3v10H3zM8 2h3v10H8z"/><path class="i-play" d="M3 1.5l9 5.5-9 5.5z"/></svg></button>
+    <button class="motion-toggle" type="button" hidden aria-pressed="false" aria-label="Pause animation"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14"><path class="i-pause" d="M3 2h3v10H3zM8 2h3v10H8z"/><path class="i-play" d="M3 1.5l9 5.5-9 5.5z"/></svg></button>
     <audio id="intro-audio" preload="none" src="audio/intro.mp3"></audio>
   </section>
 
@@ -123,6 +133,7 @@
         <div class="device-shadow"></div>
         <div class="track" id="track"><span class="track-fill"></span><span class="track-diamond"></span></div>
       </div>
+      <div class="step-tabs" aria-label="Parts of a session"><button type="button" aria-pressed="true">Listen</button><button type="button" aria-pressed="false">Idea</button><button type="button" aria-pressed="false">Practice</button><button type="button" aria-pressed="false">Journal</button></div>
       <ol class="steps">
         <li class="step is-on" data-step="0">
           <span class="step-number">I</span>

@@ -37,6 +37,14 @@ h2 em,h1 em{font-weight:400}
 .hero-world.live:not(.failed) iframe{opacity:1;transform:none}.hero-world.resetting iframe{opacity:0;transition:opacity .8s}
 .world-fallback{position:absolute;inset:0;background:72% center/cover no-repeat;opacity:0;transition:opacity 1s}
 .hero-world.failed .world-fallback,html:not(.js) .world-fallback{background-image:url(img/fallback.webp);opacity:1}
+/* While the world loads: three steps along the road, lit in turn. */
+.world-loader{position:absolute;top:0;bottom:0;left:40%;right:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .6s}
+.hero-world.live .world-loader,.hero-world.failed .world-loader{opacity:0;pointer-events:none}
+.loader-steps{display:flex;gap:16px;transform:rotate(-24deg)}
+.loader-steps i{width:14px;height:14px;background:var(--accent);transform:rotate(45deg) scale(.6);opacity:.25;animation:footstep 1.5s ease-in-out infinite}
+.loader-steps i:nth-child(2){animation-delay:.25s}.loader-steps i:nth-child(3){animation-delay:.5s}
+@keyframes footstep{30%{opacity:1;transform:rotate(45deg) scale(1)}60%{opacity:.25;transform:rotate(45deg) scale(.6)}}
+.loader-text{font:italic 400 17px var(--serif);color:var(--ink3)}
 .hero-veil{position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,var(--paper) 0,var(--paper) 30%,rgba(247,242,232,.82) 41%,rgba(247,242,232,0) 58%),linear-gradient(var(--paper),rgba(247,242,232,0) 20%),linear-gradient(rgba(247,242,232,0) 80%,var(--paper))}
 .hero-copy{width:min(1200px,calc(100% - 64px));margin-inline:auto;padding-block:132px 96px}
 .hero-copy>*{max-width:560px}
@@ -100,6 +108,7 @@ h2 em,h1 em{font-weight:400}
 .track-fill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--t) * 100%);background:var(--accent);transition:width .7s var(--ease)}
 .track-diamond{position:absolute;top:-6px;left:calc(var(--t) * 100% - 7px);width:14px;height:14px;background:var(--accent);transform:rotate(45deg) scale(.85);box-shadow:0 0 0 3px var(--sand);transition:left .7s var(--ease)}
 .steps{list-style:none;margin:0;padding:0}
+.step-tabs{display:none}
 .step{min-height:78svh;display:flex;flex-direction:column;justify-content:center;max-width:480px;opacity:.28;transform:translateX(-8px);transition:opacity .6s,transform .8s var(--ease)}
 .step.is-on{opacity:1;transform:none}
 .step-number{font:700 18px var(--caps);color:var(--accent);margin-bottom:12px}
@@ -214,6 +223,7 @@ h2 em,h1 em{font-weight:400}
   .text-link{font-size:13px;padding:8px 10px;white-space:nowrap}
   .hero{display:block;min-height:0}
   .hero-world{bottom:auto;height:58svh;overflow:hidden}
+  .world-loader{left:0}
   .hero-world iframe{width:100%;height:160%}  /* the camera frames the traveller high; a taller frame brings him to the band's middle */
   .hero-veil{bottom:auto;height:58svh;background:linear-gradient(var(--paper),rgba(247,242,232,0) 18%),linear-gradient(rgba(247,242,232,0) calc(100% - 90px),var(--paper))}
   .hero-copy{padding-block:calc(58svh + 44px) 56px}
@@ -226,10 +236,15 @@ h2 em,h1 em{font-weight:400}
   .motion-toggle{top:auto;bottom:auto;top:calc(58svh - 92px);right:20px}
   .deck{margin-top:32px;padding-inline:20px}.card{flex-basis:78vw;min-height:400px}
   .how-layout{grid-template-columns:1fr;gap:0;margin-top:8px}
-  .stage{top:0;height:56svh;z-index:1;background:linear-gradient(var(--sand) 82%,rgba(237,229,214,0))}
-  .device{width:min(190px,calc(56svh * .42))}
-  .device-shadow{display:none}.track{bottom:18px;width:160px}
-  .step{min-height:46svh;justify-content:flex-start;padding-top:12px}
+  .stage{position:relative;top:auto;height:auto;padding:28px 0 8px;perspective:1100px}
+  .device{width:min(220px,54vw)}
+  .device-shadow,.track{display:none}
+  .step-tabs{display:flex;gap:4px;margin:24px 0 20px;border-bottom:1px solid var(--line)}
+  .step-tabs button{flex:1;padding:10px 0;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;font:700 14px var(--caps);letter-spacing:.06em;color:var(--ink3);cursor:pointer}
+  .step-tabs button[aria-pressed="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+  .steps{display:grid}
+  .step{grid-area:1/1;min-height:0;justify-content:flex-start;opacity:0;transform:translateY(8px);visibility:hidden;transition:opacity .5s,transform .6s var(--ease),visibility .5s}
+  .step.is-on{visibility:visible}
   .step h3{font-size:28px;margin-bottom:10px}
   .road-map{margin-top:48px}
   .stops{gap:32px}

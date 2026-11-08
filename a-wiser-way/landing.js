@@ -112,8 +112,7 @@
   }
   // The still image is fetched only when the world can't run, so a working world fades in from paper with no flicker.
   const fail = () => { world.classList.add('failed'); motion.hidden = true; clearTimeout(timer); };
-  const webgl = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })();
-  if (webgl) frame.src = frame.dataset.src; else fail();
+  if (world.classList.contains('failed')) fail();  // the inline check found no WebGL
   const giveUp = setTimeout(() => { if (!world.classList.contains('live')) fail(); }, 15000);
   addEventListener('message', event => {
     if (event.origin !== location.origin || event.source !== frame.contentWindow || !event.data?.awwWorld) return;
@@ -123,7 +122,7 @@
     } else if (message.type === 'firstFrame') {
       // The first frames are the camera settling on the gate; fade in once it has, so nothing jumps.
       clearTimeout(giveUp); world.classList.remove('failed'); motion.hidden = false;
-      setTimeout(() => world.classList.add('live'), 1100);
+      setTimeout(() => world.classList.add('live'), 900);
     } else if (message.type === 'error') { clearTimeout(giveUp); fail(); }
     else if (message.type === 'arrive' && onArrive) { const next = onArrive; onArrive = null; next(); }
     else if (message.type === 'focus' && onArrive && message.focusSession >= 1) {
@@ -166,15 +165,36 @@
     device.insertBefore(edge, body);
   }
   const steps = $$('.step'), shots = $$('.shot');
+  const tabs = $$('.step-tabs button');
+  let current = 0;
   const setStep = index => {
+    current = index;
     steps.forEach((step, i) => step.classList.toggle('is-on', i === index));
     shots.forEach((shot, i) => shot.classList.toggle('is-on', i === index));
+    tabs.forEach((tab, i) => tab.setAttribute('aria-pressed', String(i === index)));
     $('#track').style.setProperty('--t', String(index / (steps.length - 1)));
   };
-  const stepWatcher = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) setStep(steps.indexOf(entry.target)); }),
-    // On a phone the sticky device covers the top half, so the step being read is the one below it.
-    { rootMargin: narrow.matches ? '-62% 0px -26% 0px' : '-45% 0px -45% 0px' });
-  steps.forEach(step => stepWatcher.observe(step));
+  if (narrow.matches) {
+    // On a phone a sticky device would cover the text, so the steps are a small carousel:
+    // tabs, a swipe on the phone, and a slow advance while it's on screen until the reader takes over.
+    let auto = !reduced.matches, onScreen = false;
+    const go = index => setStep((index + steps.length) % steps.length);
+    const stop = () => { auto = false; };
+    tabs.forEach((tab, i) => tab.addEventListener('click', () => { stop(); go(i); }));
+    let startX = null;
+    stage.addEventListener('touchstart', event => { startX = event.touches[0].clientX; }, { passive: true });
+    stage.addEventListener('touchend', event => {
+      const dx = event.changedTouches[0].clientX - (startX ?? event.changedTouches[0].clientX);
+      if (Math.abs(dx) > 40) { stop(); go(current + (dx < 0 ? 1 : -1)); }
+      startX = null;
+    }, { passive: true });
+    new IntersectionObserver(([entry]) => { onScreen = entry.isIntersecting; }, { threshold: .3 }).observe(stage);
+    setInterval(() => { if (auto && onScreen && !document.hidden) go(current + 1); }, 4500);
+  } else {
+    const stepWatcher = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) setStep(steps.indexOf(entry.target)); }),
+      { rootMargin: '-45% 0px -45% 0px' });
+    steps.forEach(step => stepWatcher.observe(step));
+  }
 
   const tilt = { rx: 6, ry: -18, rz: -1 }, pointer = { x: -1, y: -1, active: false };
   let howVisible = false, frameId = 0;
@@ -274,7 +294,7 @@
   // The hero world drifts a little as it scrolls away.
   let heroFrame = 0;
   addEventListener('scroll', () => {
-    if (heroFrame || reduced.matches) return;
+    if (heroFrame || reduced.matches || narrow.matches) return;  // on a phone the band would slide under the headline
     heroFrame = requestAnimationFrame(() => {
       heroFrame = 0;
       const p = clamp(scrollY / hero.offsetHeight);
