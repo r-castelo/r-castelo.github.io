@@ -74,7 +74,7 @@
   // The hero world: the app's own map, walking from the city gate to the summit.
   const world = $('#world'), frame = $('#world-frame'), motion = $('.motion-toggle'), hero = $('.hero');
   const plaque = $('#plaque');
-  let ready = false, visible = true, userPaused = false, timer = null, onArrive = null, plaqueChapter = -1;
+  let ready = false, visible = true, userPaused = false, timer = null, onArrive = null, plaqueChapter = -1, markerChapter = -1;
   const send = command => { if (ready) frame.contentWindow.postMessage({ awwCommand: command }, location.origin); };
   const later = (ms, fn) => { clearTimeout(timer); timer = setTimeout(fn, ms); };
   const states = current => Array.from({ length: 100 }, (_, i) => i + 1 < current ? 'done' : i + 1 === current ? 'current' : 'ahead');
@@ -91,7 +91,7 @@
     plaque.style.setProperty('--chapter', chapter.accent);
     plaque.classList.remove('swap'); void plaque.offsetWidth; plaque.classList.add('swap');
   };
-  const reset = () => { send({ type: 'markers', states: states(0) }); send({ type: 'traveller', session: 0 }); send({ type: 'focus', focusSession: 0 }); showStop(0); };
+  const reset = () => { markerChapter = -1; send({ type: 'markers', states: states(0) }); send({ type: 'traveller', session: 0 }); send({ type: 'focus', focusSession: 0 }); showStop(0); };
   const paused = () => reduced.matches || userPaused || !visible || document.hidden;
   const updateMotion = () => {
     const stopped = reduced.matches || userPaused;
@@ -130,8 +130,9 @@
     } else if (message.type === 'error') { clearTimeout(giveUp); fail(); }
     else if (message.type === 'arrive' && onArrive) { const next = onArrive; onArrive = null; next(); }
     else if (message.type === 'focus' && onArrive && message.focusSession >= 1) {
+      // Focus changes halfway between every two stops; re-sending the markers each time makes them flash.
       const chapter = Math.min(9, Math.floor((message.focusSession - 1) / 10));
-      send({ type: 'markers', states: states(chapter * 10 + 1) });
+      if (chapter !== markerChapter) { markerChapter = chapter; send({ type: 'markers', states: states(chapter * 10 + 1) }); }
       showStop(message.focusSession);
     }
   });
