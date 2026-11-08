@@ -16,6 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;0,800;1,400;1,500&family=Alegreya+SC:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="landing.css">
+<link rel="preload" href="world.js" as="script">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -27,7 +28,7 @@
   <section class="hero" id="top" aria-labelledby="hero-title">
     <div class="hero-world" id="world" aria-hidden="true">
       <div class="world-fallback"></div>
-      <iframe id="world-frame" title="The road through A Wiser Way" src="world.html" tabindex="-1"></iframe>
+      <iframe id="world-frame" title="The road through A Wiser Way" data-src="world.html" tabindex="-1"></iframe>
     </div>
     <div class="hero-veil" aria-hidden="true"></div>
     <div class="hero-copy">
@@ -43,7 +44,8 @@
         </div>
         <p class="audio-status" role="status"></p>
       </div>
-      <p class="availability">Coming soon to Google Play <span aria-hidden="true">·</span> First five sessions free</p>
+      <div class="stores"><a class="store" href="#" aria-disabled="true" data-store="play"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M4.5 2.6v18.8c0 .5.5.8 1 .6l10.9-6.3-3.2-3.2zM17.8 15.1l3.1-1.8c.8-.5.8-1.6 0-2.1l-3.1-1.8-3.4 2.9zM5.9 2.1l10.6 6.1-3.3 3.3zm7.3 10.4l3.3 3.3L5.9 21.9z" fill="currentColor"/></svg><span><small>Soon on</small>Google Play</span></a><a class="store" href="#" aria-disabled="true" data-store="apple"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9s-2.1-.9-3.4-.9c-1.7 0-3.3 1-4.3 2.6-1.8 3.2-.5 7.9 1.3 10.5.9 1.3 1.9 2.7 3.2 2.6 1.3 0 1.8-.8 3.3-.8s2 .8 3.4.8 2.2-1.3 3.1-2.6c1-1.5 1.4-2.9 1.4-3-.1 0-2.9-1.1-2.9-4.2zM13.9 4.9c.7-.9 1.2-2 1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.2.1 2.3-.6 3.1-1.5z" fill="currentColor"/></svg><span><small>Soon on the</small>App Store</span></a></div>
+      <p class="availability">Coming soon <span aria-hidden="true">·</span> First five sessions free</p>
     </div>
     <div class="plaque" id="plaque" aria-hidden="true">
       <span class="plaque-numeral">I</span>
@@ -246,15 +248,18 @@
       <h2 id="closing-title">Begin with a listen.</h2>
       <p class="closing-text">Three minutes. Hear the voice, get a feel for the journey.</p>
       <button class="intro-play stamped" type="button" aria-pressed="false" aria-controls="intro-audio"><span class="intro-icon" aria-hidden="true"></span><span class="intro-label">Listen to the introduction</span><span class="intro-time">3 min</span></button>
-      <p class="availability">Coming soon to Google Play</p>
+      <div class="stores stores-center"><a class="store" href="#" aria-disabled="true" data-store="play"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M4.5 2.6v18.8c0 .5.5.8 1 .6l10.9-6.3-3.2-3.2zM17.8 15.1l3.1-1.8c.8-.5.8-1.6 0-2.1l-3.1-1.8-3.4 2.9zM5.9 2.1l10.6 6.1-3.3 3.3zm7.3 10.4l3.3 3.3L5.9 21.9z" fill="currentColor"/></svg><span><small>Soon on</small>Google Play</span></a><a class="store" href="#" aria-disabled="true" data-store="apple"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9s-2.1-.9-3.4-.9c-1.7 0-3.3 1-4.3 2.6-1.8 3.2-.5 7.9 1.3 10.5.9 1.3 1.9 2.7 3.2 2.6 1.3 0 1.8-.8 3.3-.8s2 .8 3.4.8 2.2-1.3 3.1-2.6c1-1.5 1.4-2.9 1.4-3-.1 0-2.9-1.1-2.9-4.2zM13.9 4.9c.7-.9 1.2-2 1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.2.1 2.3-.6 3.1-1.5z" fill="currentColor"/></svg><span><small>Soon on the</small>App Store</span></a></div>
+      <p class="availability">Coming soon <span aria-hidden="true">·</span> First five sessions free</p>
       <a class="audio-download" href="audio/intro.mp3">Open the audio directly</a>
     </div>
   </section>
 </main>
-<div class="mini" id="mini" hidden>
-  <button class="mini-play" type="button" aria-label="Pause the introduction"><span class="intro-icon" aria-hidden="true"></span></button>
-  <span class="mini-text"><span class="mini-label">The introduction</span><span class="mini-bar"><span class="mini-fill"></span></span></span>
-  <span class="mini-time">0:00</span>
+<div class="dock" id="dock" role="region" aria-label="Listen and get the app">
+  <span class="dock-progress" aria-hidden="true"><span class="mini-fill"></span></span>
+  <button class="mini-play" type="button" aria-label="Play the introduction"><span class="intro-icon" aria-hidden="true"></span></button>
+  <span class="mini-text"><span class="mini-label">The introduction</span><span class="mini-bar" aria-hidden="true"><span class="mini-fill"></span></span></span>
+  <span class="mini-time">3 min</span>
+  <div class="stores stores-dock"><a class="store" href="#" aria-disabled="true" data-store="play"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M4.5 2.6v18.8c0 .5.5.8 1 .6l10.9-6.3-3.2-3.2zM17.8 15.1l3.1-1.8c.8-.5.8-1.6 0-2.1l-3.1-1.8-3.4 2.9zM5.9 2.1l10.6 6.1-3.3 3.3zm7.3 10.4l3.3 3.3L5.9 21.9z" fill="currentColor"/></svg><span><small>Soon on</small>Google Play</span></a><a class="store" href="#" aria-disabled="true" data-store="apple"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9s-2.1-.9-3.4-.9c-1.7 0-3.3 1-4.3 2.6-1.8 3.2-.5 7.9 1.3 10.5.9 1.3 1.9 2.7 3.2 2.6 1.3 0 1.8-.8 3.3-.8s2 .8 3.4.8 2.2-1.3 3.1-2.6c1-1.5 1.4-2.9 1.4-3-.1 0-2.9-1.1-2.9-4.2zM13.9 4.9c.7-.9 1.2-2 1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.2.1 2.3-.6 3.1-1.5z" fill="currentColor"/></svg><span><small>Soon on the</small>App Store</span></a></div>
 </div>
 <footer class="site-footer wrap"><a href="privacy/">Privacy</a><a href="mailto:hello@heyrenato.com">hello@heyrenato.com</a><span>© 2026 Renato Castelo Branco</span></footer>
 <script src="landing.js" defer></script>

@@ -19,14 +19,14 @@
   const audio = $('#intro-audio');
   const buttons = $$('.intro-play');
   const scrub = $('.scrub'), range = $('.scrub-range'), status = $('.audio-status');
-  const mini = $('#mini'), miniPlay = $('.mini-play');
+  const dock = $('#dock'), miniPlay = $('.mini-play');
   const fmt = seconds => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
-  let started = false, heroListenVisible = true, seeking = false;
-  const updateMini = () => {
-    const on = started && !heroListenVisible;
-    mini.classList.toggle('is-on', on);
-    mini.toggleAttribute('inert', !on);
-    mini.setAttribute('aria-hidden', String(!on));
+  let pastHero = false, seeking = false;
+  // The dock (introduction and store buttons) stays on screen from the moment the hero's own button scrolls away.
+  const updateDock = () => {
+    dock.classList.toggle('is-on', pastHero);
+    dock.toggleAttribute('inert', !pastHero);
+    dock.setAttribute('aria-hidden', String(!pastHero));
   };
   const updateAudio = () => {
     const playing = !audio.paused && !audio.ended;
@@ -42,14 +42,14 @@
     range.style.setProperty('--p', `${progress * 100}%`);
     $('.scrub-now').textContent = fmt(audio.currentTime);
     $('.scrub-left').textContent = `−${fmt(known ? audio.duration - audio.currentTime : 180)}`;
-    $('.mini-fill').style.width = `${progress * 100}%`;
-    $('.mini-time').textContent = fmt(audio.currentTime);
+    $$('.mini-fill').forEach(fill => { fill.style.width = `${progress * 100}%`; });
+    $('.mini-time').textContent = audio.currentTime > 0 ? fmt(audio.currentTime) : '3 min';
     miniPlay.setAttribute('aria-label', playing ? 'Pause the introduction' : 'Play the introduction');
   };
   const toggleAudio = async () => {
     scrub.hidden = false; status.textContent = '';
     if (!audio.paused) { audio.pause(); return; }
-    try { await audio.play(); started = true; mini.hidden = false; requestAnimationFrame(updateMini); }
+    try { await audio.play(); }
     catch { status.textContent = 'The introduction could not play. Try again, or use the direct audio link at the end of the page.'; updateAudio(); }
   };
   buttons.forEach(button => button.addEventListener('click', toggleAudio));
@@ -62,7 +62,10 @@
   range.addEventListener('change', () => { seeking = false; });
   ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata'].forEach(event => audio.addEventListener(event, updateAudio));
   audio.addEventListener('error', () => { status.textContent = 'The introduction could not load. Try again, or use the direct audio link at the end of the page.'; updateAudio(); });
-  new IntersectionObserver(([entry]) => { heroListenVisible = entry.isIntersecting; updateMini(); }).observe($('#listen'));
+  new IntersectionObserver(([entry]) => { pastHero = !entry.isIntersecting && entry.boundingClientRect.top < 0; updateDock(); }).observe($('#listen'));
+  updateDock();
+  // Store buttons are placeholders until the listings exist: give them a real href and drop aria-disabled.
+  $$('.store').forEach(link => link.addEventListener('click', event => { if (link.getAttribute('aria-disabled') === 'true') event.preventDefault(); }));
 
   // The hero world: the app's own map, walking from the city gate to the summit.
   const world = $('#world'), frame = $('#world-frame'), motion = $('.motion-toggle'), hero = $('.hero');
@@ -86,7 +89,6 @@
   };
   const reset = () => { send({ type: 'markers', states: states(0) }); send({ type: 'traveller', session: 0 }); send({ type: 'focus', focusSession: 0 }); showStop(0); };
   const paused = () => reduced.matches || userPaused || !visible || document.hidden;
-  const sendInset = () => send({ type: 'inset', bottom: narrow.matches ? 150 : 0 });
   const updateMotion = () => {
     const stopped = reduced.matches || userPaused;
     motion.setAttribute('aria-pressed', String(stopped));
@@ -108,15 +110,20 @@
     world.classList.add('resetting');
     later(900, () => { reset(); later(2400, () => { world.classList.remove('resetting'); later(1400, walk); }); });
   }
+  // The still image is fetched only when the world can't run, so a working world fades in from paper with no flicker.
   const fail = () => { world.classList.add('failed'); motion.hidden = true; clearTimeout(timer); };
-  const giveUp = setTimeout(() => { if (!world.classList.contains('live')) fail(); }, 12000);
+  const webgl = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })();
+  if (webgl) frame.src = frame.dataset.src; else fail();
+  const giveUp = setTimeout(() => { if (!world.classList.contains('live')) fail(); }, 15000);
   addEventListener('message', event => {
     if (event.origin !== location.origin || event.source !== frame.contentWindow || !event.data?.awwWorld) return;
     const message = event.data.awwWorld;
     if (message.type === 'ready' && !ready) {
-      ready = true; send({ type: 'reducedMotion', reducedMotion: reduced.matches }); sendInset(); start(true); updateMotion();
+      ready = true; send({ type: 'reducedMotion', reducedMotion: reduced.matches }); start(true); updateMotion();
     } else if (message.type === 'firstFrame') {
-      clearTimeout(giveUp); world.classList.remove('failed'); world.classList.add('live'); motion.hidden = false;
+      // The first frames are the camera settling on the gate; fade in once it has, so nothing jumps.
+      clearTimeout(giveUp); world.classList.remove('failed'); motion.hidden = false;
+      setTimeout(() => world.classList.add('live'), 1100);
     } else if (message.type === 'error') { clearTimeout(giveUp); fail(); }
     else if (message.type === 'arrive' && onArrive) { const next = onArrive; onArrive = null; next(); }
     else if (message.type === 'focus' && onArrive && message.focusSession >= 1) {
@@ -134,7 +141,6 @@
     if (reduced.matches) { onArrive = null; reset(); } else start(true);
     updateMotion();
   });
-  narrow.addEventListener('change', sendInset);
   document.addEventListener('visibilitychange', updateMotion);
   new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; updateMotion(); }).observe(hero);
   updateMotion();
