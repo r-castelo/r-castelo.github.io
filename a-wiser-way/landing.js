@@ -21,7 +21,7 @@
     if (m.type === 'ready' && !ready) {
       ready = true;
       send({ type: 'reducedMotion', reducedMotion: reduced.matches });
-      start();
+      start(true);
     } else if (m.type === 'firstFrame') { clearTimeout(giveUp); world.classList.add('live'); }
     else if (m.type === 'error') { clearTimeout(giveUp); fail(); }
     else if (m.type === 'arrive' && onArrive) { const f = onArrive; onArrive = null; f(); }
@@ -35,16 +35,20 @@
   // The tour: a moment at the gate, then one unbroken walk to the summit. The caption and
   // the stones behind him follow the camera, which follows him.
   let shown = null;
-  function start() {
+  // No welcome pose: it frames the traveller at another zoom, and leaving it jumps the
+  // camera. The map opens at its normal view and he simply sets off; between loops the
+  // world fades out, returns to the gate unseen, and fades back in.
+  function reset() { send({ type: 'markers', states: states(0) }); send({ type: 'traveller', session: 0 }); send({ type: 'focus', focusSession: 0 }); }
+  function walk() {
+    onArrive = () => { send({ type: 'celebrate' }); later(5000, () => start(false)); };
+    send({ type: 'walkTo', session: 100 });
+    later(240000, () => start(false)); // never stall if an arrival is missed
+  }
+  function start(first) {
     shown = null; caption(null); onArrive = null;
-    send({ type: 'markers', states: states(0) });
-    send({ type: 'welcome', enabled: true });
-    later(3500, () => {
-      send({ type: 'welcome', enabled: false });
-      onArrive = () => { send({ type: 'celebrate' }); later(5000, start); };
-      send({ type: 'walkTo', session: 100 });
-      later(240000, start); // never stall if an arrival is missed
-    });
+    if (first) { reset(); return later(2200, walk); }
+    world.classList.add('resetting');
+    later(900, () => { reset(); later(2400, () => { world.classList.remove('resetting'); later(1400, walk); }); });
   }
   function follow(session) {
     if (!onArrive || session < 1) return;

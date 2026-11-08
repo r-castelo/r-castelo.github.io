@@ -99,3 +99,4 @@ main, .hero { position: relative; z-index: 1; }
 .intro-icon::after { content: ''; position: absolute; left: 10px; top: 7px; border-style: solid; border-width: 6px 0 6px 9px; border-color: transparent transparent transparent var(--accent); }
 .intro-play[aria-pressed="true"] .intro-icon::after { left: 8px; top: 8px; width: 3px; height: 10px; border: 0; border-left: 3px solid var(--accent); border-right: 3px solid var(--accent); }
 .intro-time { font-family: var(--serif); font-weight: 400; letter-spacing: 0; opacity: .85; font-variant-numeric: lining-nums tabular-nums; }
+.world.resetting iframe { opacity: 0; transition: opacity .8s ease; }
