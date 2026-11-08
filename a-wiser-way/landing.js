@@ -63,6 +63,21 @@
     }, 250);
   }
 
+  // The intro narration from the app, loaded only when asked for.
+  const play = document.getElementById('intro-play');
+  const clock = document.getElementById('intro-time');
+  let intro = null;
+  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  play.addEventListener('click', () => {
+    if (!intro) {
+      intro = new Audio('audio/intro.mp3');
+      intro.addEventListener('timeupdate', () => { clock.textContent = `${fmt(intro.currentTime)} / ${fmt(intro.duration || 187)}`; });
+      intro.addEventListener('ended', () => { play.setAttribute('aria-pressed', 'false'); play.querySelector('.intro-label').textContent = 'Play again'; });
+    }
+    if (intro.paused) { intro.play(); play.setAttribute('aria-pressed', 'true'); play.querySelector('.intro-label').textContent = 'Pause the intro'; }
+    else { intro.pause(); play.setAttribute('aria-pressed', 'false'); play.querySelector('.intro-label').textContent = 'Resume the intro'; }
+  });
+
   // Only run the world while the hero is on screen.
   new IntersectionObserver(([entry]) => {
     if (entry.isIntersecting === visible) return;

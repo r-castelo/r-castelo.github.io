@@ -1318,6 +1318,8 @@ function startMap(renderer, options, emit) {
   let revealElapsed = options.stills ? 2 : 0, revealStarted = false;
   let revealFocus = z;
   let welcome = false, firstFrame = false, framingDirty = true, markerFade = 1;
+  // Extra height an expanded sheet covers; the view rises by half of it to keep the traveller centred.
+  let inset = 0, insetTarget = 0;
   function focusOn(session) {
     if (glide && glide.to === world.sessionZ(session)) return;
     walking = false; coast = 0;
@@ -1345,6 +1347,10 @@ function startMap(renderer, options, emit) {
       if (options.stills || options.reducedMotion) z = target;
       if (traveller.arrived !== null) { walking = false; emit({ type: 'arrive', session: traveller.arrived }); }
     }
+    if (inset !== insetTarget) {
+      inset = frozen() || Math.abs(insetTarget - inset) < 0.5 ? insetTarget : inset + (insetTarget - inset) * (1 - Math.exp(-dt * 9));
+      framingDirty = true;
+    }
     if (welcome) {
       z = target = world.sessionZ(0); glide = null; cameraVelocity = 0;
     } else if (glide) {
@@ -1364,7 +1370,10 @@ function startMap(renderer, options, emit) {
       // Traveller bounds measured in the board image, after its stated crop/scale.
       if (welcome) world.frameTraveller(.5, 400 / 844, 66 / 844, width, height, false);
       else if (options.art) world.frameTraveller(.5, 169 / 280, 60 / 280, width, height, true);
-      else world.frameTraveller(0, 0, 0, width, height, false);
+      else {
+        world.frameTraveller(0, 0, 0, width, height, false);
+        if (inset > 0.5) { world.camera.setViewOffset(width, height, 0, inset / 2, width, height); world.camera.updateProjectionMatrix(); }
+      }
       framingDirty = false;
     }
     world.animateLife(frozen() ? 0 : dt, time, !!frozen(), quality.level());
@@ -1455,6 +1464,9 @@ function startMap(renderer, options, emit) {
         options.qualityLevel = message.level; quality.reset(); if (options.stills) still(); else request();
       } else if (message.type === 'debug') {
         options.debug = !!message.enabled; quality.debug(); request();
+      } else if (message.type === 'inset' && Number.isFinite(message.bottom) && message.bottom >= 0) {
+        insetTarget = message.bottom;
+        if (frozen()) still(); else request();
       } else if (message.type === 'markers') {
         world.setMarkers(message.states, message.selectedSession);
         if (options.stills) still(); else request();
